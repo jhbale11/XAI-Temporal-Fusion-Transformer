@@ -14,23 +14,23 @@
 
 # 1. Introduction
 
-미래의 여러 Time Step에 대해서 예측을 진행하는 Multi-Horizon Forecasting은 시계열 예측 분야에서 매우 중요한 문제이다. 한 스텝 후만 예측하는 것과 달리 Multi-Horizon은 전체 시계열 데이터에 대한 접근을 가능하게 하고, 미래의 다양한 스텝들에 대한 예측 결과를 통해 활용할 수 있는 범위도 넓어진다. 미래에 대한 예측은 유통업, 헬스 케어, 금융 분야에서 중요하게 사용되고 있으며 시계열 예측의 성능 향상은 엄청난 잠재력을 가지고 있다.
+미래의 여러 Time Step에 대해서 예측을 진행하는 **Multi-Horizon Forecasting**은 시계열 예측 분야에서 매우 중요한 문제이다. 한 스텝 후만 예측하는 것과 달리 Multi-Horizon은 전체 시계열 데이터에 대한 접근을 가능하게 하고, 미래의 다양한 스텝들에 대한 예측 결과를 통해 활용할 수 있는 범위도 넓어진다. 미래에 대한 예측은 유통업, 헬스 케어, 금융 분야에서 중요하게 사용되고 있으며 시계열 예측의 성능 향상은 엄청난 잠재력을 가지고 있다.
 
 ![source : https://arxiv.org/pdf/1912.09363.pdf](https://media.vlpt.us/images/jhbale11/post/ac2b49ac-13a8-4a2b-b076-5051910c7dbf/TFT1.png)
 
 실제 Multi-Horizon Forecasting은 위 그림과 같이 다양한 데이터 Input이 필요하다.
 
-(1) 현재에는 관측을 통해서 그 값을 알 수 있지만 미래의 값은 알 수 없는 Observed Input
-(2) 시간에 따라 달라지지만, 현재에도 그 값을 알 수 있으며 미래에도 그 값을 알 수 있는 Time Vary Known Input(week, weekofyear, holiday, quarter)
-(3) 시간과 관계 없이 변하지 않는 정적 공변량 Static Covariates(ex 상점의 위치)
+(1) 현재에는 관측을 통해서 그 값을 알 수 있지만 미래의 값은 알 수 없는 **Observed Input**
+(2) 시간에 따라 달라지지만, 현재에도 그 값을 알 수 있으며 미래에도 그 값을 알 수 있는 **Time Vary Known Input**(week, weekofyear, holiday, quarter)
+(3) 시간과 관계 없이 변하지 않는 정적 공변량 **Static Covariates**(ex 상점의 위치)
 
 과거에 Autoregressive Model이 사용되었으나, 이는 모든 외인성 입력들이 미래에도 알 수 있다는 가정을 하고 있다는 문제가 있었으며, 많은 모델이 Time-Dependent Feature 들과 단순하게 결합하는 방식으로 동적인 Covariates를 무시했던 등의 이유로 Multi-Horizon의 다양한 종류의 입력들을 고려하는데 실패하였다. 최근 많은 개선된 모델들이 데이터의 고유한 특성을 구조적으로 정렬함으로써 좋은 성과를 얻어냈다. 현재 사용되는 대부분은 모델들은 'Black Box'모델들로 예측이 많은 파라미터 사이에 복잡한 비선형적인 상호작용에 의해 결정된다.
 
 모델이 한 예측에 대해서 왜 그런 결과가 나왔는지 이유를 제공해줄 수 없는 이러한 Black Box 모델은 유저들이 모델의 출력을 신뢰하거나 개발자가 모델의 구조를 디버깅하기 힘들게 한다. 그리고 대부분은 DNN 모델들은 시계열에 적합하지 않다.
 
-(1) Convolution 기반의 Post-Hoc 기법인 LIME과 SHAP은 Input Feature의 시간 순서를 고려하지 않느다. LIME은 매 데이터 포인트마다 독립적으로 모델ㅇ들이 만들어지기에 매우 비효율적이며, SHAP의 경우 Feature들이 근접한 Time Step과 독립적으로 고려된다는 점에서 시계열에 적합하지 않다. 이러한 Post-Hoc 접근들은 시계열 데이터에서 중요한 시간대에 따른 상관관계를 설명하는 능력이 매우 부족하다.
+(1) Convolution 기반의 Post-Hoc 기법인 **LIME과 SHAP**은 Input Feature의 시간 순서를 고려하지 않느다. LIME은 매 데이터 포인트마다 독립적으로 모델ㅇ들이 만들어지기에 매우 비효율적이며, SHAP의 경우 Feature들이 근접한 Time Step과 독립적으로 고려된다는 점에서 시계열에 적합하지 않다. 이러한 Post-Hoc 접근들은 시계열 데이터에서 중요한 시간대에 따른 상관관계를 설명하는 능력이 매우 부족하다.
 
-(2) 반면 Language나 Speech에서 주로 사용되는 Attention 기반의 모델들은 Sequence 데이터에 대한 해석력이 매우 뛰어나다. Language나 Speech와 달리 시계열 데이터는 다양한 Feature를 가지고 있다는 것이 특징인데, 이러한 방법론을 시계열 데이터에 적용했을 때 중요한 Time Step을 발견할 수는 있지만 Feature 간의 관계에서 어떤 Feature가 중요하게 고려되고 있는지, 주어진 Time Step에 따른 Feature들의 각각의 중요성을 구분하기는 힘들다. 따라서 새로운 기법은 이러한 예측이 해석가능하게 하는 것이 필수적이다.
+(2) 반면 Language나 Speech에서 주로 사용되는 **Attention 기반의 모델들**은 Sequence 데이터에 대한 해석력이 매우 뛰어나다. Language나 Speech와 달리 시계열 데이터는 다양한 Feature를 가지고 있다는 것이 특징인데, 이러한 방법론을 시계열 데이터에 적용했을 때 중요한 Time Step을 발견할 수는 있지만 Feature 간의 관계에서 어떤 Feature가 중요하게 고려되고 있는지, 주어진 Time Step에 따른 Feature들의 각각의 중요성을 구분하기는 힘들다. 따라서 새로운 기법은 이러한 예측이 해석가능하게 하는 것이 필수적이다.
 
 Attention 기반의 DNN 구조인 TFT는 새로운 해석력을 제공한다. Attention Score를 통해 Time Step에서의 중요성을 해석할 수 있음은 물론, Static Variable에 대하여, Encoder Variable에 대하여, Decoder Variable에 대해서 Interpretation을 제공한다는 점에서 큰 장점을 가진다.
 
@@ -56,15 +56,15 @@ TFT는 이러한 문제를 정적 Feature들에 대하여 개별적인 Encoder-D
 
 TFT의 주요 구성은 아래와 같다.
 
-(1) Gating Mechanism을 통해 불필요한 성분을 스킵하여 광범위한 데이터셋에 대하여 adaptive depth와 network complexity 감소를 통해 가능하게 한다.
+(1) **Gating Mechanism**을 통해 불필요한 성분을 스킵하여 광범위한 데이터셋에 대하여 adaptive depth와 network complexity 감소를 통해 가능하게 한다.
 
-(2) Variable Selection Network를 통해 관련 있는 Input Variable만 선택한다.
+(2) **Variable Selection Network**를 통해 관련 있는 Input Variable만 선택한다.
 
-(3) Static Covariate Encoder를 통해 정적 공변량들을 Context Vector에 인코딩하고 네트워크에 결합한다.
+(3) **Static Covariate Encoder**를 통해 정적 공변량들을 Context Vector에 인코딩하고 네트워크에 결합한다.
 
-(4) Temporal Processing을 통해 Observed Input과 Known Input 모두에 대해 장기 단기 시간 관계를 학습한다. Local Processing을 위해 seq2seq layer를 사용하며, Interpretable Multi-Head Attention을 통해 장기 의존성을 알아낸다.
+(4) **Temporal Processing**을 통해 Observed Input과 Known Input 모두에 대해 장기 단기 시간 관계를 학습한다. Local Processing을 위해 seq2seq layer를 사용하며, Interpretable Multi-Head Attention을 통해 장기 의존성을 알아낸다.
 
-(5) Prediction Intervals을 통해 Quantile을 이용하여 매 Prediction Horizon에 대하여 Target이 존재할 수 있는 범위를 제공한다.
+(5) Prediction Intervals을 통해 **Quantile을 이용**하여 매 Prediction Horizon에 대하여 Target이 존재할 수 있는 범위를 제공한다.
 
 ### 4.1 Gating Mechanisms
 ### 4.2 Variable Selection Networks
@@ -90,7 +90,7 @@ TFT의 주요 구성은 아래와 같다.
   - day_of_month
   - week_of_year
   - month
+- Static Covairates : Region
 
 #### (3) Result
 ![source : https://arxiv.org/pdf/1912.09363.pdf](https://media.vlpt.us/images/jhbale11/post/8f319bd0-8efa-48a4-af24-2ba07ba4fc64/1-s2.0-S0169207021000637-gr5.jpg)
-Static Covairates : Region
